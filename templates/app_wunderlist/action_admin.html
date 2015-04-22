@@ -1,0 +1,17 @@
+
+ <!-- action usual -->
+ <!-- table wunderlists search -->
+ [#if VIEW_MODE="search_wunderlists" || VIEW_MODE=""#]
+  [#inc wunderlists_search_admin.html#]
+ [#endif VIEW_MODE#]
+ <!-- / table wunderlists search -->
+ <!-- table wunderlists edit -->
+ [#if VIEW_MODE="edit_wunderlists"#]
+   [#inc wunderlists_edit.html#]
+ [#endif VIEW_MODE#]
+ <!-- / table wunderlists edit -->
+ <!-- table wunderlists view --> 
+ [#if VIEW_MODE="view_wunderlists"#]
+   [#inc wunderlists_view.html#]
+ [#endif VIEW_MODE#]
+ <!-- / table wunderlists view -->
