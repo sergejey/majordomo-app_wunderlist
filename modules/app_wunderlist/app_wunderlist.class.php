@@ -151,7 +151,40 @@ function admin(&$out) {
 * @access public
 */
 function usual(&$out) {
- //$this->admin($out);
+ global $op;
+
+ if ($op=='add') {
+  global $title;
+  global $list;
+  global $wunder_account;
+  if (!$title) {
+   echo "Incorrect usage";
+   return;
+  }
+  $res=$this->addTask($title, $list, $wunder_account);
+  if ($res) {
+   echo "OK";
+  } else {
+   echo "Error";
+  }
+ }
+
+ if ($op=='complete') {
+  global $title;
+  global $wunder_account;
+  if (!$title) {
+   echo "Incorrect usage";
+   return;
+  }
+  $res=$this->completeTask($title, $wunder_account);
+  if ($res) {
+   echo "OK";
+  } else {
+   echo "Error";
+  }
+ }
+
+ exit;
 
 }
 /**
@@ -213,6 +246,174 @@ function usual(&$out) {
 *
 * @access public
 */
+ function completeTask($title, $wunder_account='') {
+  if (!$wunder_account) {
+   $rec=SQLSelectOne("SELECT * FROM wunderlists ORDER BY ID LIMIT 1");
+  } else {
+   $rec=SQLSelectOne("SELECT * FROM wunderlists WHERE TITLE LIKE '".DBSafe($wunder_account)."'");
+  }
+
+  if (!$rec['DATA']) {
+   $this->refreshData($rec['ID']);
+   $rec=SQLSelectOne("SELECT * FROM wunderlists WHERE ID = '".$rec['ID']."'");
+  }
+
+  if (!$rec['ID']) {
+   return 0;
+  }
+
+  $lists=unserialize($rec['DATA']);
+  $list_id=0;
+
+
+
+
+  $task_id=0;
+  $revision=0;
+
+  foreach($lists as $k=>$v) {
+   $tasks=$v['TASKS'];
+   if (is_array($tasks)) {
+    $total=count($tasks);
+    for($i=0;$i<$total;$i++) {
+     if ($tasks[$i]['title']==$title) {
+      $task_id=$tasks[$i]['id'];
+      $revision=$tasks[$i]['revision'];
+     }
+    }
+   }
+  }
+
+
+
+  if (!$task_id || !$revision) {
+   return 0;
+  }
+
+
+//UPDATE TASK
+$data = array(
+ "revision" => $revision, 
+ "completed" => true);                                                                    
+
+$data_string = json_encode($data); 
+
+$ch = curl_init();
+curl_setopt($ch, CURLOPT_URL,"http://a.wunderlist.com/api/v1/tasks/".$task_id);
+curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "PATCH");
+curl_setopt($ch, CURLOPT_POSTFIELDS, $data_string);
+curl_setopt($ch, CURLOPT_HTTPHEADER, array(
+    'Content-Type: application/json',
+    'Content-Length: ' . strlen($data_string),
+    'X-Access-Token: '.$rec['TOKEN'],
+    'X-Client-ID: '.WUNDERLIST_CLIENT_ID
+    ));
+
+curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+$server_output = curl_exec ($ch);
+$data=json_decode($server_output, TRUE);
+curl_close ($ch);
+
+  if ($data['created_at']) {
+   $this->refreshData($rec['ID']);
+   return 1;
+  } else {
+   return 0;
+  }
+
+
+  
+ }
+
+/**
+* Title
+*
+* Description
+*
+* @access public
+*/
+ function addTask($title, $list='', $wunder_account='', $when=0) {
+  if (!$wunder_account) {
+   $rec=SQLSelectOne("SELECT * FROM wunderlists ORDER BY ID LIMIT 1");
+  } else {
+   $rec=SQLSelectOne("SELECT * FROM wunderlists WHERE TITLE LIKE '".DBSafe($wunder_account)."'");
+  }
+
+  if (!$rec['DATA']) {
+   $this->refreshData($rec['ID']);
+   $rec=SQLSelectOne("SELECT * FROM wunderlists WHERE ID = '".$rec['ID']."'");
+  }
+
+  if (!$rec['ID']) {
+   return 0;
+  }
+
+  if ($when) {
+   $tm=$when;
+  } else {
+   $tm=time();
+  }
+
+  if (!$list) {
+   $list='inbox';
+  }
+
+  $due_date = date("Y-m-d",$tm);
+
+  $lists=unserialize($rec['DATA']);
+  $list_id=0;
+
+  foreach($lists as $k=>$v) {
+   if ($v['title']==$list) {
+    $list_id=$k;
+   }
+  }
+
+  if (!$list_id) {
+   return 0;
+  }
+  
+//ADD TASK
+$data = array(
+ "list_id" => $list_id, 
+ "title" => $title, 
+ "due_date" => $due_date);                                                                    
+
+$data_string = json_encode($data); 
+
+$ch = curl_init();
+curl_setopt($ch, CURLOPT_URL,"http://a.wunderlist.com/api/v1/tasks");
+curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "POST");
+curl_setopt($ch, CURLOPT_POSTFIELDS, $data_string);
+curl_setopt($ch, CURLOPT_HTTPHEADER, array(
+    'Content-Type: application/json',
+    'Content-Length: ' . strlen($data_string),
+    'X-Access-Token: '.$rec['TOKEN'],
+    'X-Client-ID: '.WUNDERLIST_CLIENT_ID
+    ));
+
+curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+$server_output = curl_exec ($ch);
+$data=json_decode($server_output, TRUE);
+curl_close ($ch);
+
+  if ($data['created_at']) {
+   $this->refreshData($rec['ID']);
+   return 1;
+  } else {
+   return 0;
+  }
+
+
+ }
+
+/**
+* Title
+*
+* Description
+*
+* @access public
+*/
  function refreshData($id) {
    $rec=SQLSelectOne("SELECT * FROM wunderlists WHERE ID='".(int)$id."'");
    if (!$rec['ID'] || !$rec['TOKEN']) {
@@ -261,7 +462,7 @@ if (is_array($datat)) {
  $totalt=count($datat);
  $lists[$data[$i]['id']]['TASKS']=array();
  for($it=0;$it<$totalt;$it++) {
-  $task=array('title'=>$datat[$it]['title'], 'id'=>$datat[$it]['id'], 'due_date'=>$datat[$it]['due_date'], 'starred'=>$datat[$it]['starred']);
+  $task=array('title'=>$datat[$it]['title'], 'id'=>$datat[$it]['id'], 'due_date'=>$datat[$it]['due_date'], 'starred'=>$datat[$it]['starred'], 'revision'=>$datat[$it]['revision']);
   $lists[$data[$i]['id']]['TASKS'][]=$task;
   if ($datat[$it]['due_date'] && strtotime($datat[$it]['due_date'])<=time()) {
    $task['list_title']=$data[$i]['title'];

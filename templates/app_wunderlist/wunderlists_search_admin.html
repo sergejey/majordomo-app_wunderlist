@@ -64,6 +64,11 @@
 </form>
 
 <p>
+ <a href="#" onClick="$('#help').toggle()">Advanced usage</a>
+</p>
+
+<div id='help' style="display:none">
+<p>
 Use following code to update data automatically:
 <pre>
 include_once(DIR_MODULES.'app_wunderlist/app_wunderlist.class.php');
@@ -94,6 +99,34 @@ Read tasks for specific list (list 'Work' for user 'User1'):
  }
 </pre>
 </p>
+
+<p>
+Add task:
+<pre>
+include_once(DIR_MODULES.'app_wunderlist/app_wunderlist.class.php');
+$wunderlist=new app_wunderlist();
+$wunderlist-&gt;addTask("New task");
+//$wunderlist-&gt;addTask("New task", "Work"); // to the list "Work"
+//$wunderlist-&gt;addTask("New task", "Work", "Tasks of user1"); // for the specific user
+//$wunderlist-&gt;addTask("New task", "Work", "Tasks of user1", time()+24*60*60); //due tomorrow
+</pre>
+HTTP request:
+<pre>http://IP/popup/app_wunderlist.html?op=add&title=TaskTitle</pre>
+</p>
+
+<p>
+Set as complete:
+<pre>
+include_once(DIR_MODULES.'app_wunderlist/app_wunderlist.class.php');
+$wunderlist=new app_wunderlist();
+$wunderlist-&gt;completeTask("New task");
+//$wunderlist-&gt;completeTask("New task", "Tasks of user1"); // for the specific user
+</pre>
+HTTP request:
+<pre>http://IP/popup/app_wunderlist.html?op=complete&title=TaskTitle</pre>
+</p>
+</div>
+
 
 <!-- / search results (list) -->
 [#else RESULT#]
