@@ -351,7 +351,59 @@ curl_close ($ch);
   if ($when) {
    $tm=$when;
   } else {
-   $tm=time();
+   
+        if (preg_match('/завтра/isu', $title, $m)) { //tomorrow
+         $title=trim(str_replace($m[0], '', $title));
+                 $tm=time()+1*24*60*60;
+        } elseif (preg_match('/послезавтра/isu', $title, $m)) { // day after tomorrow
+         $title=trim(str_replace($m[0], '', $title));
+         $tm=time()+2*24*60*60;
+        } elseif (preg_match('/понедельник/isu', $title, $m)) { // monday
+                 $title=trim(str_replace($m[0], '', $title));
+                 $tm=time()+1*24*60*60;
+                 while(date('w',$tm)!=1) {
+                  $tm+=1*24*60*60;
+                 }
+        } elseif (preg_match('/вторник/isu', $title, $m)) { // tuesday
+                 $title=trim(str_replace($m[0], '', $title));
+                 $tm=time()+1*24*60*60;
+                 while(date('w',$tm)!=2) {
+                  $tm+=1*24*60*60;
+                 }
+        } elseif (preg_match('/сред(а|у)/isu', $title, $m)) { // wednesday
+                 $title=trim(str_replace($m[0], '', $title));
+                 $tm=time()+1*24*60*60;
+                 while(date('w',$tm)!=3) {
+                  $tm+=1*24*60*60;
+                 }               
+        } elseif (preg_match('/четверг/isu', $title, $m)) { // thursday
+                 $title=trim(str_replace($m[0], '', $title));
+                 $tm=time()+1*24*60*60;
+                 while(date('w',$tm)!=4) {
+                  $tm+=1*24*60*60;
+                 }                               
+        } elseif (preg_match('/пятниц(а|у)/isu', $title, $m)) { // friday
+                 $title=trim(str_replace($m[0], '', $title));
+                 $tm=time()+1*24*60*60;
+                 while(date('w',$tm)!=5) {
+                  $tm+=1*24*60*60;
+                 }      
+        } elseif (preg_match('/суббот(а/у)/isu', $title, $m)) { // saturday
+                 $title=trim(str_replace($m[0], '', $title));
+                 $tm=time()+1*24*60*60;
+                 while(date('w',$tm)!=6) {
+                  $tm+=1*24*60*60;
+                 }      
+        } elseif (preg_match('/воскресенье/isu', $title, $m)) { // sunday
+                 $title=trim(str_replace($m[0], '', $title));
+                 $tm=time()+1*24*60*60;
+                 while(date('w',$tm)!=0) {
+                  $tm+=1*24*60*60;
+                 }                       
+        } else {
+          $tm=time();
+        }   
+   
   }
 
   if (!$list) {
