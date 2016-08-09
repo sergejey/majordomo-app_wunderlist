@@ -566,7 +566,7 @@ if (is_array($datat)) {
 *
 * @access private
 */
- function dbInstall() {
+ function dbInstall($data) {
 /*
 wunderlists - Wunderlist
 */
